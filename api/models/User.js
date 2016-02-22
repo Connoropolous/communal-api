@@ -8,29 +8,13 @@ module.exports = bookshelf.Model.extend({
     return this.hasMany(Activity, 'reader_id')
   },
 
-  comments: function () {
-    return this.hasMany(Comment)
-  },
-
   communities: function () {
     return this.belongsToMany(Community, 'users_community').through(Membership)
       .query({where: {'users_community.active': true}}).withPivot('role')
   },
 
-  contributions: function () {
-    return this.hasMany(Contribution)
-  },
-
-  devices: function () {
-    return this.hasMany(Device, 'user_id')
-  },
-
   emails: function () {
     return this.hasMany(UserEmail)
-  },
-
-  followedPosts: function () {
-    return this.belongsToMany(Post).through(Follow)
   },
 
   linkedAccounts: function () {
@@ -53,24 +37,12 @@ module.exports = bookshelf.Model.extend({
     return this.hasMany(UserPhone)
   },
 
-  posts: function () {
-    return this.hasMany(Post)
-  },
-
-  eventsRespondedTo: function () {
-    return this.belongsToMany(Post).through(EventResponse)
-  },
-
   sentInvitations: function () {
     return this.hasMany(Invitation, 'invited_by_id')
   },
 
   skills: function () {
     return this.hasMany(Skill)
-  },
-
-  thanks: function () {
-    return this.hasMany(Thank)
   },
 
   websites: function () {
@@ -130,16 +102,6 @@ module.exports = bookshelf.Model.extend({
     var compare = Promise.promisify(bcrypt.compare, bcrypt)
     return compare(this.generateTokenContents(), token)
   },
-
-  sendPushNotification: function (alert, url) {
-    return this.devices().fetch()
-    .then(devices => devices.map(device => device.sendPushNotification(alert, url)))
-  },
-
-  resetNotificationCount: function () {
-    return this.devices().fetch()
-    .then(devices => devices.map(device => device.resetNotificationCount()))
-  }
 
 }, {
   authenticate: Promise.method(function (email, password) {
@@ -209,8 +171,7 @@ module.exports = bookshelf.Model.extend({
           (invitation && invitation.get('community_id'))
         return Promise.join(
           Tour.startOnboarding(user.id, {transacting: trx}),
-          invitation && invitation.use(user.id, {transacting: trx}),
-          communityId && Post.createWelcomePost(user.id, communityId, trx)
+          invitation && invitation.use(user.id, {transacting: trx})
         )
       })),
 

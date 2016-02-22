@@ -1,8 +1,4 @@
-var Promise = require('bluebird'),
-  request = require('request'),
-  format = require('util').format,
-  get = Promise.promisify(request.get),
-  slackAuthAccess = 'https://slack.com/api/oauth.access';
+var format = require('util').format
 
 module.exports = {
   find: function (req, res) {
@@ -20,7 +16,7 @@ module.exports = {
     var membership = res.locals.membership
 
     return Promise.method(() => community.get('network_id') ? community.load('network') : null)()
-    .then(() => community.pick('id', 'name', 'slug', 'avatar_url', 'banner_url', 'description', 'settings', 'location'))
+    .then(() => community.pick('id', 'name', 'slug', 'avatar_url', 'banner_url', 'description', 'settings'))
     .tap(data => {
       var network = community.relations.network
       if (network) data.network = network.pick('id', 'name', 'slug')
@@ -35,7 +31,7 @@ module.exports = {
     Community.find(req.param('communityId'), {withRelated: ['leader']})
     .tap(community => leader = community.relations.leader)
     .then(community => _.merge(community.pick(
-      'welcome_message', 'beta_access_code', 'slack_hook', 'slack_team', 'slack_configure', 'settings'
+      'welcome_message', 'beta_access_code', 'settings'
     ), {
       leader: leader ? leader.pick('id', 'name', 'avatar_url') : null
     }))
@@ -46,7 +42,7 @@ module.exports = {
   update: function (req, res) {
     var whitelist = [
       'banner_url', 'avatar_url', 'name', 'description', 'settings',
-      'welcome_message', 'leader_id', 'beta_access_code', 'location', 'slack_hook', 'slack_team', 'slack_configure'
+      'welcome_message', 'leader_id', 'beta_access_code'
     ]
     var attributes = _.pick(req.allParams(), whitelist)
     var saneAttrs = _.clone(attributes)
@@ -61,33 +57,6 @@ module.exports = {
     .catch(res.serverError)
   },
 
-  addSlack: function (req, res) {
-    var code = req.query.code,
-      redirect_uri = req.protocol + '://' + process.env.DOMAIN + req.path,
-      url = format('%s?client_id=%s&client_secret=%s&code=%s&redirect_uri=%s',
-                       slackAuthAccess,
-                       process.env.SLACK_APP_CLIENT_ID,
-                       process.env.SLACK_APP_CLIENT_SECRET,
-                       code,
-                       redirect_uri);
-
-    get(url).spread((resp, body) => {
-      var parsed = JSON.parse(body);
-      Community.find(req.param('communityId')).then(function (community) {
-        var communityToUpdate = new Community({id: req.param('communityId')})
-        communityToUpdate.save({
-          slack_hook: parsed.incoming_webhook.url,
-          slack_team: parsed.team_name,
-          slack_configure: parsed.incoming_webhook.configuration_url
-        }, {patch: true})
-        .then(() => res.redirect(Frontend.Route.community(community) + '/settings?slack=1'))
-        .catch(() => res.redirect(Frontend.Route.community(community) + '/settings?slack=0'))
-      })
-    }).catch(err => {
-      res.redirect(Frontend.Route.community(community) + '/settings?slack=0')
-    });
-  },
-
   findModerators: function (req, res) {
     Community.find(req.param('communityId')).then(function (community) {
       return community.moderators().fetch()
@@ -99,6 +68,26 @@ module.exports = {
           avatar_url: user.get('avatar_url')
         }
       }))
+    })
+  },
+
+  findTools: function (req, res) {
+    var allTools
+    Tool.fetchAll()
+    .tap(t => allTools = t)
+    .tap(() => {
+      console.log(allTools);
+      Community.find(req.param('communityId')).then(function (community) {
+        return community.tools().fetch({
+            withRelated: ['tool']
+          })
+      }).then(function (tools) {
+        res.ok({
+          tools_total: tools.length,
+          tools: tools,
+          available_tools: allTools
+        })
+      })
     })
   },
 
@@ -119,8 +108,7 @@ module.exports = {
     return Community.query('whereRaw', 'lower(beta_access_code) = lower(?)', req.param('code')).fetch()
     .tap(c => community = c)
     .tap(() => bookshelf.transaction(trx => Promise.join(
-      Membership.create(req.session.userId, community.id, {transacting: trx}),
-      Post.createWelcomePost(req.session.userId, community.id, trx)
+      Membership.create(req.session.userId, community.id, {transacting: trx})
     )))
     .catch(err => {
       if (err.message && err.message.includes('duplicate key value')) {
@@ -192,8 +180,7 @@ module.exports = {
 
   create: function (req, res) {
     var attrs = _.pick(req.allParams(),
-      'name', 'description', 'slug', 'category',
-      'beta_access_code', 'banner_url', 'avatar_url', 'location')
+      'name', 'slug', 'beta_access_code', 'avatar_url')
 
     var community = new Community(_.merge(attrs, {
       created_at: new Date(),
@@ -201,18 +188,13 @@ module.exports = {
     }))
 
     community.set('leader_id', req.session.userId)
-    community.set('welcome_message', 'Thank you for joining us here at Hylo. ' +
-      'Through our communities, we can find everything we need. If we share ' +
-      'with each other the unique gifts and intentions we each have, we can ' +
-      "create extraordinary things. Let's get started!")
-    community.set('settings', {sends_email_prompts: true})
+    community.set('welcome_message', 'Thank you for joining us here on Communal. ' +
+      '' +
+      '' +
+      "")
 
     return bookshelf.transaction(trx => {
       return community.save(null, {transacting: trx})
-      .tap(community => community.createStarterPosts(trx)
-        .catch(err => {
-          if (err.message !== 'Starter posts community not found') throw err
-        }))
       .then(() => Membership.create(req.session.userId, community.id, {
         role: Membership.MODERATOR_ROLE,
         transacting: trx

@@ -1,5 +1,4 @@
-var url = require('url'),
-    Slack = require('../services/Slack')
+var url = require('url')
 
 module.exports = bookshelf.Model.extend({
   tableName: 'community',
@@ -25,6 +24,10 @@ module.exports = bookshelf.Model.extend({
     return this.hasMany(Membership).query({where: {'users_community.active': true}})
   },
 
+  tools: function () {
+    return this.hasMany(UseOfTool)
+  },
+
   moderators: function () {
     return this.belongsToMany(User, 'users_community', 'community_id', 'user_id')
       .query({where: {role: Membership.MODERATOR_ROLE}})
@@ -37,58 +40,7 @@ module.exports = bookshelf.Model.extend({
   users: function () {
     return this.belongsToMany(User).through(Membership)
       .query({where: {'users_community.active': true, 'users.active': true}}).withPivot('role')
-  },
-
-  posts: function () {
-    return this.belongsToMany(Post).through(PostMembership)
-      .query({where: {'post.active': true}})
-  },
-
-  comments: function () {
-    // FIXME get this to use the model relation API
-    // instead of the Collection API so that the use
-    // of fetch vs. fetchAll isn't confusing.
-    // as it is now, it uses "fetchAll" when all the
-    // other relations use "fetch"
-    var communityId = this.id
-    return Comment.query(function (qb) {
-      qb.where({
-        'post_community.community_id': communityId,
-        'comment.active': true
-      }).leftJoin('post_community', function () {
-        this.on('post_community.post_id', 'comment.post_id')
-      })
-    })
-  },
-
-  createStarterPosts: function (trx) {
-    var self = this
-    var now = new Date()
-    var timeShift = {
-      chat: 0,
-      intention: 1,
-      offer: 2,
-      request: 3
-    }
-    return Community.find('starter-posts', {withRelated: ['posts', 'posts.followers']})
-    .tap(c => {
-      if (!c) throw new Error('Starter posts community not found')
-    })
-    .then(c => c.relations.posts.models)
-    .then(posts => Promise.map(posts, post => {
-      if (post.get('type') === 'welcome') return
-
-      var newPost = post.copy()
-      var time = new Date(now - timeShift[newPost.get('type')] * 1000)
-      return newPost.save({created_at: time, updated_at: time}, {transacting: trx})
-      .then(() => Promise.all(_.flatten([
-        self.posts().attach(newPost, {transacting: trx}),
-        post.relations.followers.map(u =>
-          Follow.create(u.id, newPost.id, {transacting: trx}))
-      ])))
-    }))
   }
-
 }, {
   find: function (id_or_slug, options) {
     if (isNaN(Number(id_or_slug))) {
@@ -136,14 +88,6 @@ module.exports = bookshelf.Model.extend({
     return Community.find(communityId)
     .then(community => community && community.get('network_id'))
     .then(networkId => networkId && Network.containsUser(networkId, userId))
-  },
-
-  sendSlackNotification: function (communityId, post) {
-    return Community.find(communityId)
-    .then(community => {
-      if (!community || !community.get('slack_hook')) return
-      var slackMessage = Slack.textForNewPost(post, community)
-      return Slack.send(slackMessage, community.get('slack_hook'))
-    })
   }
+
 })

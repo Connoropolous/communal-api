@@ -19,13 +19,6 @@ module.exports = {
     return findCommunityIds(req)
     .then(function (communityIds) {
       return Promise.join(
-        _.contains(resultTypes, 'posts') && Search.forPosts({
-          term: term,
-          limit: limit,
-          offset: offset,
-          communities: communityIds,
-          sort: 'post.created_at'
-        }).fetchAll({withRelated: PostPresenter.relations(req.session.userId)}),
         _.contains(resultTypes, 'people') && Search.forUsers({
           term: term,
           limit: limit,
@@ -34,10 +27,8 @@ module.exports = {
         }).fetchAll({withRelated: ['skills', 'organizations']})
       )
     })
-    .spread(function (posts, people) {
+    .spread(function (people) {
       res.ok({
-        posts_total: posts && (posts.length > 0 ? Number(posts.first().get('total')) : 0),
-        posts: posts && posts.map(PostPresenter.present),
         people_total: people && (people.length > 0 ? Number(people.first().get('total')) : 0),
         people: people && people.map(function (user) {
           return _.chain(user.attributes)
@@ -58,10 +49,6 @@ module.exports = {
     var sort, method, columns
 
     switch (resultType) {
-      case 'posts':
-        method = Search.forPosts
-        sort = 'post.created_at'
-        break
       case 'skills':
         method = Search.forSkills
         columns = ['skill_name']
@@ -79,7 +66,6 @@ module.exports = {
         return findCommunityIds(req)
         .then(communityIds => ({
           communities: communityIds,
-          project: req.param('projectId')
         }))
       }
 
@@ -93,9 +79,6 @@ module.exports = {
     .then(rows => {
       var present
       switch (resultType) {
-        case 'posts':
-          present = row => row.pick('id', 'name')
-          break
         case 'skills':
           present = row => ({name: row.get('skill_name')})
           break

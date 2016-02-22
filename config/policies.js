@@ -23,7 +23,6 @@ module.exports.policies = {
   '*': false,
 
   SessionController: true,
-  LinkedinController: ['sessionAuth'],
 
   InvitationController: {
     use: true,
@@ -53,11 +52,7 @@ module.exports.policies = {
     findSelf:            ['allowPublicAccess', 'sessionAuth'],
     findOne:             ['sessionAuth', 'inSameCommunityOrNetwork'],
     update:              ['sessionAuth', 'isSelf'],
-    contributions:       ['sessionAuth', 'inSameCommunityOrNetwork'],
-    thanks:              ['sessionAuth', 'inSameCommunityOrNetwork'],
     sendPasswordReset:   true,
-    findForProject:      ['allowPublicAccess', 'sessionAuth', 'checkAndSetProject'],
-    findForProjectRedux: ['allowPublicAccess', 'sessionAuth', 'checkAndSetProject'],
     findForCommunity:    ['allowTokenAuth', 'sessionAuth', 'checkAndSetMembership'],
     findForNetwork:      ['sessionAuth', 'inNetwork']
   },
@@ -78,8 +73,8 @@ module.exports.policies = {
     findOne:         ['allowPublicAccess', 'allowTokenAuth', 'sessionAuth', 'checkAndSetMembership'],
     findSettings:    ['sessionAuth', 'canInvite'],
     update:          ['sessionAuth', 'isModerator'],
-    addSlack:        ['sessionAuth', 'isModerator'],
     findModerators:  ['sessionAuth', 'isModerator'], // FIXME move to UserController
+    findTools:       ['sessionAuth', 'checkAndSetMembership'],
     addModerator:    ['sessionAuth', 'isModerator'],
     removeModerator: ['sessionAuth', 'isModerator'],
     removeMember:    ['sessionAuth', 'isModerator'],
@@ -90,31 +85,18 @@ module.exports.policies = {
     joinWithCode:    ['sessionAuth']
   },
 
-  PostController: {
-    findOne:          ['allowPublicAccess', 'sessionAuth', 'checkAndSetPost'],
-    findForCommunity: ['allowPublicAccess', 'allowTokenAuth', 'sessionAuth', 'checkAndSetMembership'],
-    findForProject:   ['allowPublicAccess', 'sessionAuth', 'checkAndSetProject'],
-    findForUser:      ['sessionAuth', 'inSameCommunityOrNetwork'],
-    findForNetwork:   ['sessionAuth', 'inNetwork'],
-    create:           ['sessionAuth', 'inCommunitiesOrProject'],
-    update:           ['sessionAuth', 'checkAndSetWritablePost'],
-    follow:           ['sessionAuth', 'checkAndSetPost'],
-    respond:          ['sessionAuth', 'checkAndSetPost'],
-    findFollowed:     ['sessionAuth', 'isSelf'],
-    findAllForUser:   ['sessionAuth', 'isSelf'],
-    fulfill:          ['sessionAuth', 'checkAndSetOwnPost'],
-    vote:             ['sessionAuth', 'checkAndSetPost'],
-    complain:         ['sessionAuth', 'checkAndSetPost'],
-    destroy:          ['sessionAuth', 'checkAndSetWritablePost'],
-    createFromEmail: true
+  ToolController: {
+    create:          ['sessionAuth'], //, 'isAdmin'],
+    show:            ['sessionAuth'], //, 'isAdmin'],
+    update:          ['sessionAuth'], //, 'isAdmin'],
+    destroy:         ['sessionAuth'] //, 'isAdmin']
   },
 
-  CommentController: {
-    create:          ['sessionAuth', 'checkAndSetPost'],
-    thank:           ['sessionAuth'],
-    findForPost:     ['allowPublicAccess', 'sessionAuth', 'checkAndSetPost'],
-    destroy:         ['sessionAuth', 'isCommentOwner'],
-    createFromEmail: true
+  UseOfToolController: {
+    create:          ['sessionAuth', 'isModerator'],
+    show:            ['sessionAuth', 'isModerator'],
+    update:          ['sessionAuth', 'isModerator'],
+    destroy:         ['sessionAuth', 'isModerator']
   },
 
   MessageController: {
@@ -122,37 +104,12 @@ module.exports.policies = {
     createWaitlistRequest: true
   },
 
-  ProjectController: {
-    create:              ['sessionAuth'],
-    find:                ['sessionAuth'],
-    update:              ['sessionAuth', 'checkAndSetWritableProject'],
-    findOne:             ['allowPublicAccess', 'sessionAuth', 'checkAndSetProject'],
-    invite:              ['sessionAuth', 'checkAndSetWritableProject'],
-    join:                ['sessionAuth', 'checkAndSetProject'],
-    removeUser:          ['sessionAuth', 'checkAndSetWritableProject'],
-    findForUser:         ['sessionAuth', 'isSelf'],
-    findForCommunity:    ['sessionAuth', 'checkAndSetMembership'],
-    updateMembership:    ['sessionAuth', 'isSelf', 'checkAndSetProject'],
-    toggleModeratorRole: ['sessionAuth', 'checkAndSetWritableProject']
-  },
-
-  DeviceController: {
-    create:           ['sessionAuth'],
-    destroy:          ['sessionAuth'],
-    updateBadgeNo:    ['sessionAuth']
-  },
-
   NetworkController: {
     findOne: ['sessionAuth', 'inNetwork']
-  },
-
-  SubscriptionController: {
-    create: true
   },
 
   StaticPageController: {
     proxy: ['renderOpenGraphTags']
   },
 
-  NexudusController: true
 }

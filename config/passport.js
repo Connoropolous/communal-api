@@ -1,11 +1,6 @@
 var passport = require('passport')
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
-var GoogleTokenStrategy = require('passport-google-token').Strategy
-var FacebookStrategy = require('passport-facebook').Strategy
-var FacebookTokenStrategy = require('passport-facebook-token').Strategy
-var LinkedinStrategy = require('passport-linkedin-oauth2').Strategy
-var LinkedInTokenStrategy = require('passport-linkedin-token-oauth2').Strategy
-
+var CTAuthStrategy = require('passport-ctauth')
 // -----------
 // admin login
 
@@ -50,67 +45,23 @@ var url = function (path) {
 }
 
 var formatProfile = function (profile, accessToken, refreshToken) {
-  return _.merge(profile, {
-    name: profile.displayName,
-    email: profile.emails[0].value,
+
+  return {
+    id: profile.sub,
+    name: 'Connor Turland', // todo
+    email: profile.email,
     _json: {
       access_token: accessToken,
-      refresh_token: refreshToken
     }
-  })
+  }
 }
 
-var googleStrategy = new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: url('/noo/login/google/oauth')
+var ctauthStrategy = new CTAuthStrategy({
+  clientID: process.env.CTAUTH_CLIENT_ID,
+  clientSecret: process.env.CTAUTH_CLIENT_SECRET,
+  callbackURL: url('/noo/login/ctauth/oauth')
 }, function (accessToken, refreshToken, profile, done) {
   done(null, formatProfile(profile))
 })
-passport.use(googleStrategy)
+passport.use(ctauthStrategy)
 
-var facebookStrategy = new FacebookStrategy({
-  clientID: process.env.FACEBOOK_APP_ID,
-  clientSecret: process.env.FACEBOOK_APP_SECRET,
-  callbackURL: url('/noo/login/facebook/oauth'),
-  scope: ['public_profile', 'email', 'user_friends', 'user_about_me', 'user_likes', 'user_location'],
-  profileFields: ['id', 'displayName', 'email', 'link']
-}, function (accessToken, refreshToken, profile, done) {
-  done(null, formatProfile(profile, accessToken, refreshToken))
-})
-passport.use(facebookStrategy)
-
-var facebookTokenStrategy = new FacebookTokenStrategy({
-  clientID: process.env.FACEBOOK_APP_ID,
-  clientSecret: process.env.FACEBOOK_APP_SECRET
-}, function (accessToken, refreshToken, profile, done) {
-  done(null, formatProfile(profile, accessToken, refreshToken))
-})
-passport.use(facebookTokenStrategy)
-
-var googleTokenStrategy = new GoogleTokenStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET
-}, function (accessToken, refreshToken, profile, done) {
-  done(null, formatProfile(profile))
-})
-passport.use(googleTokenStrategy)
-
-var linkedinStrategy = new LinkedinStrategy({
-  clientID: process.env.LINKEDIN_API_KEY,
-  clientSecret: process.env.LINKEDIN_API_SECRET,
-  callbackURL: url('/noo/login/linkedin/oauth'),
-  scope: ['r_emailaddress', 'r_basicprofile'],
-  state: true
-}, function (accessToken, refreshToken, profile, done) {
-  done(null, formatProfile(profile))
-})
-passport.use(linkedinStrategy)
-
-var linkedinTokenStrategy = new LinkedInTokenStrategy({
-  clientID: process.env.LINKEDIN_API_KEY,
-  clientSecret: process.env.LINKEDIN_API_SECRET
-}, function (accessToken, refreshToken, profile, done) {
-  done(null, formatProfile(profile))
-})
-passport.use(linkedinTokenStrategy)

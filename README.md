@@ -21,6 +21,8 @@ npm install
 
 Create a `.env` file in the root of the working copy, with contents like this:
 ```
+CTAUTH_CLIENT_ID=zjkh61hhs22hsasd7asdf0
+CTAUTH_CLIENT_SECRET=1276dasd8f78a78asdfa6hjkl1lkjn
 ADMIN_GOOGLE_CLIENT_ID=foo
 ADMIN_GOOGLE_CLIENT_SECRET=foo
 ASSET_HOST_URL=http://localhost:1337

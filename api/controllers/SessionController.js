@@ -52,13 +52,6 @@ var upsertUser = (req, service, profile) => {
 
 var finishOAuth = function (strategy, req, res, next) {
   var service = strategy
-  if (strategy === 'facebook-token') {
-    service = 'facebook'
-  } else if (strategy === 'google-token') {
-    service = 'google'
-  } else if (strategy === 'linkedin-token') {
-    service = 'linkedin'
-  }
 
   var respond = error => {
     if (error && error.stack) console.error(error.stack)
@@ -112,43 +105,16 @@ module.exports = {
     })
   },
 
-  startGoogleOAuth: setSessionFromParams(function (req, res) {
-    passport.authenticate('google', {scope: 'email'})(req, res)
+  startCTAuthOAuth: setSessionFromParams(function (req, res) {
+    passport.authenticate('ctauth')(req, res)
   }),
 
-  finishGoogleOAuth: function (req, res, next) {
-    finishOAuth('google', req, res, next)
+  finishCTAuthOAuth: function (req, res, next) {
+    finishOAuth('ctauth', req, res, next)
   },
 
-  startFacebookOAuth: setSessionFromParams(function (req, res) {
-    passport.authenticate('facebook', {
-      display: 'popup',
-      scope: ['email', 'public_profile', 'user_friends']
-    })(req, res)
-  }),
-
-  finishFacebookOAuth: function (req, res, next) {
-    finishOAuth('facebook', req, res, next)
-  },
-
-  finishFacebookTokenOAuth: function (req, res, next) {
-    finishOAuth('facebook-token', req, res, next)
-  },
-
-  finishGoogleTokenOAuth: function (req, res, next) {
-    finishOAuth('google-token', req, res, next)
-  },
-
-  startLinkedinOAuth: setSessionFromParams(function (req, res) {
-    passport.authenticate('linkedin')(req, res)
-  }),
-
-  finishLinkedinOauth: function (req, res, next) {
-    finishOAuth('linkedin', req, res, next)
-  },
-
-  finishLinkedinTokenOauth: function (req, res, next) {
-    finishOAuth('linkedin-token', req, res, next)
+  finishCTAuthTokenOAuth: function (req, res, next) {
+    finishOAuth('ctauth-token', req, res, next)
   },
 
   destroy: function (req, res) {

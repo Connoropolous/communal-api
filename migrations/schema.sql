@@ -104,7 +104,6 @@ CREATE TABLE community (
     beta_access_code character varying(255),
     description text,
     slug character varying(255) NOT NULL,
-    daily_digest boolean DEFAULT true,
     membership_fee bigint,
     plan_guid character varying(63),
     banner_url text,
@@ -117,7 +116,6 @@ CREATE TABLE community (
     settings jsonb DEFAULT '{}'::jsonb,
     default_public_content boolean DEFAULT false,
     network_id bigint,
-    location character varying(255)
 );
 
 

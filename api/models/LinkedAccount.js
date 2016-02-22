@@ -49,16 +49,6 @@ module.exports = bookshelf.Model.extend({
 
   socialMediaAttributes: function (type, profile) {
     switch (type) {
-      case 'facebook':
-        return {
-          facebook_url: profile.profileUrl,
-          avatar_url: `http://graph.facebook.com/${profile.id}/picture?type=large`
-        }
-      case 'linkedin':
-        return {
-          linkedin_url: profile._json.publicProfileUrl,
-          avatar_url: profile.photos[0].value
-        }
     }
   }
 })

@@ -23,22 +23,6 @@ module.exports = {
       return url('/u/%s', user.id);
     },
 
-    project: function(project) {
-      return url('/project/%s', project.get('slug'));
-    },
-
-    projectSettings: function(project) {
-      return url('/project/%s/settings', project.get('slug'));
-    },
-
-    post: function(post, community) {
-      return url('/c/%s/s/%s', community.get('slug'), post.id);
-    },
-
-    unfollow: function(post, community) {
-      return this.post(post, community) + '?action=unfollow';
-    },
-
     userSettings: function() {
       return url('/settings');
     },

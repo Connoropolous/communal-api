@@ -1,16 +1,6 @@
 var validator = require('validator')
 
 var findContext = function (req) {
-  var projectId = req.param('projectId')
-  if (projectId) {
-    return Project.find(projectId).then(project => {
-      if (!project) return {}
-      if (project.isPublic()) return {project: project}
-
-      return ProjectInvitation.validate(projectId, req.param('projectToken'))
-        .then(valid => (valid ? {project: project} : {}))
-    })
-  }
 
   if (req.session.invitationId) {
     return Invitation.find(req.session.invitationId, {withRelated: ['community']})
@@ -85,35 +75,11 @@ module.exports = {
     .catch(res.serverError)
   },
 
-  contributions: function (req, res) {
-    return setupReputationQuery(req, Contribution)
-    .then(q => q.fetchAll({
-      withRelated: [
-        {post: q => q.column('id', 'name', 'user_id', 'type')},
-        {'post.creator': q => q.column('id', 'name', 'avatar_url')},
-        {'post.communities': q => q.column('community.id', 'name')}
-      ]
-    })).then(res.ok, res.serverError)
-  },
-
-  thanks: function (req, res) {
-    return setupReputationQuery(req, Thank)
-    .then(q => q.fetchAll({
-      withRelated: [
-        {thankedBy: q => q.column('id', 'name', 'avatar_url')},
-        {comment: q => q.column('id', 'comment_text', 'post_id')},
-        {'comment.post.creator': q => q.column('id', 'name', 'avatar_url')},
-        {'comment.post': q => q.column('post.id', 'name', 'user_id', 'type')},
-        {'comment.post.communities': q => q.column('community.id', 'name')}
-      ]
-    })).then(res.ok, res.serverError)
-  },
-
   update: function (req, res) {
     var attrs = _.pick(req.allParams(), [
       'name', 'bio', 'avatar_url', 'banner_url', 'twitter_name', 'linkedin_url', 'facebook_url',
-      'email', 'send_email_preference', 'work', 'intention', 'extra_info',
-      'new_notification_count', 'push_follow_preference', 'push_new_post_preference', 'settings'
+      'email', 'work', 'intention', 'extra_info',
+      'new_notification_count', 'settings'
     ])
 
     return User.find(req.param('userId'))
@@ -158,10 +124,6 @@ module.exports = {
         ))
       }
 
-      if (attrs.new_notification_count === 0) {
-        promises.push(user.resetNotificationCount())
-      }
-
       var newPassword = req.param('password')
       if (newPassword) {
         promises.push(
@@ -204,29 +166,6 @@ module.exports = {
       }
     })
     .catch(res.serverError.bind(res))
-  },
-
-  findForProject: function (req, res) {
-    var total
-
-    res.locals.project.contributors()
-    .query(qb => {
-      qb.limit(req.param('limit') || 10)
-      qb.offset(req.param('offset') || 0)
-      qb.orderBy('projects_users.created_at', 'desc')
-      qb.select(bookshelf.knex.raw('users.*, count(*) over () as total'))
-    })
-    .fetch({withRelated: ['skills', 'organizations']})
-    .tap(users => total = (users.length > 0 ? users.first().get('total') : 0))
-    .then(users => users.map(u => _.extend(UserPresenter.presentForList(u), {membership: u.pivot.pick('role')})))
-    .then(users => {
-      if (req.param('paginate')) {
-        return {people_total: total, people: users}
-      } else {
-        return users
-      }
-    })
-    .then(res.ok, res.serverError)
   },
 
   findForCommunity: function (req, res) {
