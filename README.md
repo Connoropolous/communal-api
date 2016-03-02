@@ -1,10 +1,4 @@
-### hi!
 
-Thanks for checking out our code. The documentation below may be incomplete or incorrect. We welcome pull requests! But we're a very small team, so we can't guarantee timely responses.
-
-:heart:, [Edward](https://github.com/edwardwest), [Ray](https://github.com/razorman8669), [Lawrence](https://github.com/levity), [Minda](https://github.com/Minda), & [Robbie](https://github.com/robbiecarlton)
-
-[![Code Climate](https://codeclimate.com/github/Hylozoic/hylo-node/badges/gpa.svg)](https://codeclimate.com/github/Hylozoic/hylo-node) [![Test Coverage](https://codeclimate.com/github/Hylozoic/hylo-node/badges/coverage.svg)](https://codeclimate.com/github/Hylozoic/hylo-node/coverage)
 
 ### setup
 
@@ -33,12 +27,6 @@ DOMAIN=localhost:3001
 EMAIL_SENDER=dev+localtester@hylo.com
 GOOGLE_CLIENT_ID=foo
 GOOGLE_CLIENT_SECRET=foo
-FACEBOOK_APP_ID=foo
-FACEBOOK_APP_SECRET=foo
-KISS_AUTH_TOKEN=foo
-KISS_AUTH_COMMUNITY_ID=9
-LINKEDIN_API_KEY=foo
-LINKEDIN_API_SECRET=foo
 MAILGUN_DOMAIN=mg.hylo.com
 MAILGUN_EMAIL_SALT=FX988194AD22EE636
 NODE_ENV=development
@@ -49,18 +37,13 @@ REDIS_URL=redis://localhost:6379
 ROLLBAR_SERVER_TOKEN=foo
 SEGMENT_KEY=foo
 SENDWITHUS_KEY=foo
-SLACK_APP_CLIENT_ID=xxxxxxx
-SLACK_APP_CLIENT_SECRET=xxxxxxxx
 ```
 * `ADMIN_GOOGLE_CLIENT_*`: To access the admin console.  Get these values from the [hylo-admin Google project](https://console.developers.google.com/project/hylo-admin).
 * `ASSET_HOST_URL`: The host for static assets. In development, this is the [hylo-frontend](https://github.com/Hylozoic/hylo-frontend) server, which listens at `localhost:1337` by default.
 * `DEBUG_SQL`: set to `true` if you want to output the SQL used within knex/bookshelf
 * `DATABASE_URL`: set to your local DB instance
 * `PLAY_APP_SECRET`: set to a string over length 16 to avoid the code erroring. real value only needed for running in production environment
-* `ROLLBAR_SERVER_TOKEN`: use the `post_server_item` token in  [Rollbar](https://rollbar.com/hylo_dev/Hylo/settings/access_tokens/)
 * `SENDWITHUS_KEY`: set up a test key in SendWithUs to send all email only to you (ask someone with admin rights to set this up)
-* `SLACK_APP_CLIENT_ID`: set up an app on Slack and reference its' client id, optional for dev installation
-* `SLACK_APP_CLIENT_SECRET`: reference the client secret from that same app on Slack, optional for dev installation
 
 ### running the dev server
 
